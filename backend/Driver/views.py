@@ -125,16 +125,34 @@ class DriverView (APIView):
 
     def post(self, request):
         try:
-            request.data['Email'] = request.data['Email'].lower()
-            if Driver.objects.filter(Q(Email=request.data['Email']) | Q(Mobile_number=request.data['Mobile_number'])).exists():
-                return Response( 'Email or Mobile number Already Used',status.HTTP_208_ALREADY_REPORTED)
-            else:
-                serializer = DriverSerializer(data=request.data)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+            if request.data['Truck_id']!="null":
+                request.data['Email'] = request.data['Email'].lower()
+                if Driver.objects.filter(Q(Email=request.data['Email']) | Q(Mobile_number=request.data['Mobile_number'])).exists():
+                    return Response( 'Email or Mobile number Already Used',status.HTTP_208_ALREADY_REPORTED)
                 else:
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    serializer = DriverSerializer(data=request.data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                TruckData = TruckSerializer(data=request.data)
+                if TruckData.is_valid():
+                    TruckData.save()
+                TruckDetail=json.loads(json.dumps(TruckSerializer(Truck.objects.get(Plate_number=request.data['Plate_number'])).data))
+                request.data['Truck'] = TruckDetail['Truck_id']
+                request.data['Email'] = request.data['Email'].lower()
+                if Driver.objects.filter(Q(Email=request.data['Email']) | Q(Mobile_number=request.data['Mobile_number'])).exists():
+                    return Response( 'Email or Mobile number Already Used',status.HTTP_208_ALREADY_REPORTED)
+                else:
+                    serializer = DriverSerializer(data=request.data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
         except:
             return Response(status=status.HTTP_417_EXPECTATION_FAILED)
 
